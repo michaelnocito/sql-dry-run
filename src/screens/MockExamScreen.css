@@ -32,7 +32,7 @@
 .btn-duration.selected { border-color: var(--accent); background: var(--accent-lt); color: var(--accent); }
 
 /* Exam layout */
-.mock-exam-wrapper { display: flex; flex-direction: column; height: 100dvh; }
+.mock-exam-wrapper { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
 
 .mock-timer {
   display: flex;
@@ -60,7 +60,7 @@
 .btn-submit-early:hover { background: var(--bg); }
 
 /* Review */
-.mock-review { display: flex; flex-direction: column; gap: 24px; overflow-y: auto; max-height: 100dvh; }
+.mock-review { display: flex; flex-direction: column; gap: 24px; overflow-y: auto; max-height: 100%; }
 
 .mock-review-header {
   display: flex;

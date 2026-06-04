@@ -140,6 +140,8 @@ export default function SQLQuestionView({
           </div>
         )}
 
+        <div className="qv-sidebar-spacer" />
+
         {phase === 'working' && (
           <button
             className="btn-submit"

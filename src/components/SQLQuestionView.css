@@ -1,13 +1,19 @@
 .qv-layout {
   display: flex;
-  height: 100dvh;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
+}
+
+/* When inside the mock exam wrapper (timer steals some height) */
+.mock-exam-wrapper > .qv-layout {
+  height: auto;
 }
 
 /* ── Sidebar ── */
 .qv-sidebar {
-  width: 340px;
-  min-width: 300px;
+  width: 380px;
+  min-width: 320px;
   display: flex;
   flex-direction: column;
   background: var(--surface);
@@ -181,10 +187,13 @@
 .qv-editor-section {
   display: flex;
   flex-direction: column;
-  flex: 0 0 45%;
+  flex: 0 0 50%;
   border-bottom: 2px solid var(--border);
   min-height: 0;
 }
+
+/* Pushes submit / feedback to the bottom of the sidebar */
+.qv-sidebar-spacer { flex: 1; }
 
 .qv-panel-header {
   display: flex;
