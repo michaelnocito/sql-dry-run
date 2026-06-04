@@ -1,0 +1,79 @@
+.weakness-report {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.wr-section {
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.wr-section:last-child { border-bottom: none; }
+
+.wr-heading {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+
+/* Weak skill rows */
+.wr-skill-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+
+.wr-skill-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #fff5f5;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius);
+}
+
+.wr-skill-info { display: flex; flex-direction: column; gap: 2px; }
+.wr-skill-name  { font-size: 14px; font-weight: 600; color: var(--text); }
+.wr-skill-topic { font-size: 12px; color: var(--muted); }
+
+.wr-skill-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.wr-pct  { font-size: 13px; font-weight: 700; color: var(--incorrect); }
+.wr-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+  padding: 4px 10px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  white-space: nowrap;
+}
+.wr-link:hover { background: var(--accent-lt); }
+
+/* Wrong question list */
+.wr-wrong-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+
+.wr-wrong-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.wr-wrong-prompt { flex: 1; }
+.wr-more { font-size: 13px; color: var(--muted); font-style: italic; }
+
+/* Unstarted */
+.wr-unstarted { font-size: 14px; color: var(--muted); }
+
+/* Clean state */
+.wr-clean {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+}
+.wr-clean-icon { font-size: 20px; color: var(--correct); }
+.wr-clean p    { font-size: 14px; color: var(--muted); }

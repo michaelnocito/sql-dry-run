@@ -1,0 +1,150 @@
+.mock-screen { padding: 40px 24px; max-width: 640px; margin: 0 auto; }
+
+.mock-setup { display: flex; flex-direction: column; gap: 24px; }
+
+.mock-setup-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.mock-setup-card h2 { font-size: 22px; font-weight: 800; }
+.mock-setup-card p  { color: var(--muted); font-size: 15px; line-height: 1.6; }
+
+.mock-duration-row { display: flex; gap: 12px; }
+
+.btn-duration {
+  flex: 1;
+  padding: 12px 0;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 15px;
+  font-weight: 600;
+  background: none;
+  cursor: pointer;
+  color: var(--text);
+  transition: border-color 0.15s, background 0.15s;
+}
+.btn-duration:hover   { border-color: var(--accent); background: var(--accent-lt); }
+.btn-duration.selected { border-color: var(--accent); background: var(--accent-lt); color: var(--accent); }
+
+/* Exam layout */
+.mock-exam-wrapper { display: flex; flex-direction: column; height: 100dvh; }
+
+.mock-timer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  flex-shrink: 0;
+}
+.mock-timer-urgent { background: #fef2f2; color: var(--incorrect); border-bottom-color: var(--incorrect); }
+
+.btn-submit-early {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  background: none;
+  cursor: pointer;
+  color: var(--muted);
+}
+.btn-submit-early:hover { background: var(--bg); }
+
+/* Review */
+.mock-review { display: flex; flex-direction: column; gap: 24px; overflow-y: auto; max-height: 100dvh; }
+
+.mock-review-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+.mock-review-header h2 { font-size: 22px; font-weight: 800; }
+
+.mock-score { display: flex; flex-direction: column; align-items: flex-end; }
+.mock-score-num { font-size: 28px; font-weight: 800; color: var(--accent); }
+.mock-score-pct { font-size: 13px; color: var(--muted); }
+
+.mock-review-list { display: flex; flex-direction: column; gap: 8px; }
+
+.review-row {
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.review-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  list-style: none;
+}
+.review-summary::-webkit-details-marker { display: none; }
+.review-summary::before { content: '▶'; font-size: 10px; color: var(--muted); margin-right: 4px; }
+details[open] .review-summary::before { content: '▼'; }
+
+.review-skill  { font-size: 14px; font-weight: 600; flex: 1; }
+.review-status { font-size: 13px; font-weight: 600; margin-left: auto; }
+
+.status-correct   { color: var(--correct);  }
+.status-hardcoded { color: var(--hardcode); }
+.status-partial   { color: var(--hardcode); }
+.status-incorrect { color: var(--incorrect);}
+.status-skipped   { color: var(--muted);    }
+
+.review-detail {
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--bg);
+}
+.review-prompt      { font-size: 13px; color: var(--muted); font-style: italic; }
+.review-explanation { font-size: 14px; line-height: 1.6; color: var(--text); }
+.review-formula {
+  display: block;
+  padding: 8px 12px;
+  background: #f1f5f9;
+  border-radius: var(--radius);
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  color: var(--accent);
+}
+
+.review-skipped { opacity: 0.5; }
+
+.mock-review-actions { display: flex; gap: 12px; flex-wrap: wrap; padding-bottom: 40px; }
+
+.btn-back {
+  background: none; border: none; color: var(--muted);
+  font-size: 14px; cursor: pointer; padding: 4px 0;
+}
+.btn-back:hover { color: var(--text); }
+
+.btn-primary {
+  padding: 10px 20px; background: var(--accent); color: #fff;
+  border: none; border-radius: var(--radius); font-size: 14px;
+  font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+}
+.btn-primary:hover { opacity: 0.88; }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-ghost {
+  padding: 10px 20px; background: none; border: 1px solid var(--border);
+  border-radius: var(--radius); font-size: 14px; cursor: pointer;
+  color: var(--muted); transition: background 0.15s;
+}
+.btn-ghost:hover { background: var(--bg); }

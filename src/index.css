@@ -1,0 +1,22 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #f8f7f4;
+  --surface:   #ffffff;
+  --border:    #e5e7eb;
+  --text:      #1a1a2e;
+  --muted:     #6b7280;
+  --accent:    #4f46e5;
+  --accent-lt: #eef2ff;
+  --correct:   #10b981;
+  --hardcode:  #f59e0b;
+  --incorrect: #ef4444;
+  --radius:    8px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 15px;
+  color: var(--text);
+  background: var(--bg);
+}
+
+body { height: 100dvh; overflow: hidden; }
+#root { height: 100%; }
