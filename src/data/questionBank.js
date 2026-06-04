@@ -1,15 +1,18 @@
-import { SELECT_FILTER_QUESTIONS } from './questions/select-filter'
-import { SKILLS }                  from '../lib/mastery'
+import { SELECT_FILTER_QUESTIONS }  from './questions/select-filter'
+import { AGGREGATION_QUESTIONS }    from './questions/aggregation'
+import { JOINS_QUESTIONS }          from './questions/joins'
+import { SUBQUERIES_QUESTIONS }     from './questions/subqueries'
+import { WINDOW_FUNCTIONS_QUESTIONS } from './questions/window-functions'
+import { STRING_DATE_QUESTIONS }    from './questions/string-date'
+import { SKILLS }                   from '../lib/mastery'
 
-// Phase 1: select-filter placeholder only.
-// Phase 4 adds full banks for all 6 skills.
 export const QUESTION_BANK = {
   'select-filter':    SELECT_FILTER_QUESTIONS,
-  'aggregation':      [],
-  'joins':            [],
-  'subqueries':       [],
-  'window-functions': [],
-  'string-date':      [],
+  'aggregation':      AGGREGATION_QUESTIONS,
+  'joins':            JOINS_QUESTIONS,
+  'subqueries':       SUBQUERIES_QUESTIONS,
+  'window-functions': WINDOW_FUNCTIONS_QUESTIONS,
+  'string-date':      STRING_DATE_QUESTIONS,
 }
 
 export function getQuestions(skill, difficulty) {
