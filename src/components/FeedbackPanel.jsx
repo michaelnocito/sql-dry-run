@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import ExplainPanel from './ExplainPanel'
 import './FeedbackPanel.css'
 
 const STATUS_CONFIG = {
@@ -39,6 +40,8 @@ export default function FeedbackPanel({ result, question, onNext, isLast }) {
       </div>
 
       <p className="feedback-explanation">{question.explanation}</p>
+
+      <ExplainPanel question={question} />
 
       <div className="feedback-solution">
         <button

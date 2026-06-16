@@ -3,6 +3,7 @@ import { bootSQL, freshDB, execQuery } from '../lib/sqlInit'
 import { gradeSQL } from '../lib/sqlGrader'
 import { logAttempt } from '../lib/db'
 import FeedbackPanel from './FeedbackPanel'
+import ExplainPanel from './ExplainPanel'
 import './SQLQuestionView.css'
 
 export default function SQLQuestionView({
@@ -120,7 +121,7 @@ export default function SQLQuestionView({
         </div>
 
         <details className="qv-schema">
-          <summary className="qv-schema-summary">Tables</summary>
+          <summary className="qv-schema-summary">📋 Tables — click to reveal names &amp; columns</summary>
           <pre className="qv-schema-pre">{question.schema}</pre>
         </details>
 
@@ -138,6 +139,10 @@ export default function SQLQuestionView({
               </button>
             )}
           </div>
+        )}
+
+        {phase === 'working' && hintsShown >= question.hints.length && (
+          <ExplainPanel question={question} />
         )}
 
         <div className="qv-sidebar-spacer" />
@@ -183,6 +188,12 @@ export default function SQLQuestionView({
         <div className="qv-editor-section">
           <div className="qv-panel-header">
             <span className="qv-panel-label">SQL</span>
+            <span
+              className="qv-run-tip"
+              style={{ marginLeft: 'auto', marginRight: '0.6rem', fontSize: '0.72rem', opacity: 0.7 }}
+            >
+              Shift + Enter to run
+            </span>
             <button
               className="btn-run"
               onClick={handleRun}
@@ -199,6 +210,12 @@ export default function SQLQuestionView({
             spellCheck={false}
             readOnly={phase === 'done'}
             onKeyDown={e => {
+              // Shift+Enter or Ctrl+Enter runs the query (like common SQL editors)
+              if (e.key === 'Enter' && (e.shiftKey || e.ctrlKey) && phase === 'working') {
+                e.preventDefault()
+                handleRun()
+                return
+              }
               // Tab inserts 2 spaces
               if (e.key === 'Tab') {
                 e.preventDefault()

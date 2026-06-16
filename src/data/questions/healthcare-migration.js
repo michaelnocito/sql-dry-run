@@ -2,6 +2,11 @@
 // Same core SQL skills as the general bank, set in a real EHR data-migration
 // scenario: reconcile → dedup → handle nulls → map codes → check FK integrity → grain.
 // Tagged track:'healthcare' so they stay out of the general diagnostic/practice/mock.
+//
+// Convention: prompts describe the task in BUSINESS terms and never name the SQL
+// tables — the learner opens the (collapsed) Tables panel to discover names/columns.
+// Each question's LAST hint is a complete, runnable query. plainSummary powers the
+// "Explain this query" panel (plain-English mechanics).
 
 // Shared scenario: a legacy patient system being migrated into a new EHR.
 const HC_SCHEMA = `CREATE TABLE legacy_patients (
@@ -33,8 +38,8 @@ export const HC_RECONCILE = {
   prompt: "Before migrating, sanity-check the source. Return the total number of patient rows and the number of distinct MRNs, as total_rows and distinct_mrns. (If they differ, you have duplicates to resolve first.)",
 
   hints: [
-    "COUNT(*) counts every row; COUNT(DISTINCT mrn) counts unique medical record numbers.",
-    "You can return both in a single SELECT with two aliased aggregates.",
+    "Open the Tables panel to find the patient table and its columns.",
+    "COUNT(*) counts every row; COUNT(DISTINCT mrn) counts unique medical record numbers. You can return both in one SELECT with two aliased aggregates.",
     "SELECT COUNT(*) AS total_rows, COUNT(DISTINCT mrn) AS distinct_mrns FROM legacy_patients",
   ],
 
@@ -45,6 +50,8 @@ export const HC_RECONCILE = {
   },
 
   explanation: "The first query in any migration: COUNT(*) vs COUNT(DISTINCT key). Here 6 rows but only 5 distinct MRNs means one duplicate patient record is hiding in the source — you'd resolve it before loading into the new EHR.",
+
+  plainSummary: "It uses COUNT(*) to tally every patient row and COUNT(DISTINCT mrn) to tally only the unique medical record numbers, returning both side by side. If the two numbers don't match, duplicates are hiding in the data.",
 
   solutionQuery: `SELECT COUNT(*) AS total_rows, COUNT(DISTINCT mrn) AS distinct_mrns
 FROM legacy_patients`,
@@ -72,6 +79,8 @@ export const HC_DEDUP = {
   },
 
   explanation: "GROUP BY <natural key> HAVING COUNT(*) > 1 is THE duplicate-detection pattern. In healthcare the natural key is the MRN — duplicate patient records are the #1 EHR-migration headache, so you surface them before they multiply downstream.",
+
+  plainSummary: "It uses GROUP BY to pile rows together by MRN, COUNT(*) to measure how big each pile is, and HAVING to keep only the piles bigger than one — i.e. the MRNs that show up more than once.",
 
   solutionQuery: `SELECT mrn, COUNT(*) AS n
 FROM legacy_patients
@@ -109,6 +118,8 @@ export const HC_COALESCE = {
 
   explanation: "Target systems with NOT NULL constraints reject blank fields. COALESCE(email, phone, 'NO CONTACT ON FILE') supplies a graceful fallback so the load doesn't fail — and so you don't silently drop patients whose contact info was incomplete.",
 
+  plainSummary: "It uses COALESCE, which walks a list left to right and returns the first value that isn't empty (NULL). So it tries email, then phone, and if both are blank it falls back to the text 'NO CONTACT ON FILE'.",
+
   solutionQuery: `SELECT mrn, COALESCE(email, phone, 'NO CONTACT ON FILE') AS contact
 FROM legacy_patients`,
 }
@@ -124,8 +135,8 @@ export const HC_CASE_MAP = {
 
   hints: [
     "CASE is SQL's if/else. Normalize the case first so 'd' and 'D' both match — wrap the column in UPPER().",
-    "Add an ELSE branch to catch NULLs and any unexpected code as 'Needs Review'.",
-    "CASE UPPER(status_code) WHEN 'A' THEN 'Active' WHEN 'I' THEN 'Inactive' WHEN 'D' THEN 'Deceased' ELSE 'Needs Review' END",
+    "Add an ELSE branch to catch NULLs and any unexpected code as 'Needs Review'. Remember CASE is just one column inside a full SELECT … FROM … statement.",
+    "SELECT mrn, CASE UPPER(status_code) WHEN 'A' THEN 'Active' WHEN 'I' THEN 'Inactive' WHEN 'D' THEN 'Deceased' ELSE 'Needs Review' END AS status_label FROM legacy_patients",
   ],
 
   answerKey: {
@@ -142,6 +153,8 @@ export const HC_CASE_MAP = {
   },
 
   explanation: "Legacy data is dirty — mixed case ('d') and NULLs. UPPER() normalizes before matching, and the ELSE catch-all keeps unmapped or missing codes visible as 'Needs Review' instead of silently dropping them. That's the difference between a robust crosswalk and one that loses Aisha's record.",
+
+  plainSummary: "It uses CASE — SQL's if/else — to check each patient's status_code and swap the short code for a full label. UPPER() forces the code to a capital letter first so 'd' and 'D' are treated the same, and the ELSE branch catches blanks or unknown codes as 'Needs Review'. The whole CASE is one column inside a normal SELECT … FROM statement.",
 
   solutionQuery: `SELECT mrn,
   CASE UPPER(status_code)
@@ -160,12 +173,12 @@ export const HC_ORPHANS = {
 
   schema: HC_SCHEMA,
 
-  prompt: "The new system enforces a foreign key from encounters to patients. Find encounters whose patient_id has no matching patient record — these would fail the load. Return encounter_id and patient_id.",
+  prompt: "The new system enforces a foreign key: every visit must point to a real patient. Find the visit records whose patient_id has no matching patient — these would fail the load. Return encounter_id and patient_id.",
 
   hints: [
-    "Keep ALL encounters with a LEFT JOIN to legacy_patients, then look for the ones that found no match.",
-    "Unmatched rows have NULL on the patients side — filter with WHERE p.patient_id IS NULL.",
-    "FROM encounters e LEFT JOIN legacy_patients p ON e.patient_id = p.patient_id WHERE p.patient_id IS NULL",
+    "Open the Tables panel: there's a visit table and a patient table linked by patient_id.",
+    "Keep ALL visits with a LEFT JOIN to the patients, then look for the ones that found no match — unmatched rows have NULL on the patient side.",
+    "SELECT e.encounter_id, e.patient_id FROM encounters e LEFT JOIN legacy_patients p ON e.patient_id = p.patient_id WHERE p.patient_id IS NULL",
   ],
 
   answerKey: {
@@ -174,7 +187,9 @@ export const HC_ORPHANS = {
     orderSensitive: false,
   },
 
-  explanation: "The anti-join: LEFT JOIN then WHERE the right-side key IS NULL. It finds orphan records that would violate a foreign-key constraint on load. Encounter 105 points at patient 99, who doesn't exist — catch it before the migration fails, not after.",
+  explanation: "The anti-join: LEFT JOIN then WHERE the right-side key IS NULL. It finds orphan records that would violate a foreign-key constraint on load. Visit 105 points at patient 99, who doesn't exist — catch it before the migration fails, not after.",
+
+  plainSummary: "It uses a LEFT JOIN to line up every visit against its patient, keeping the visit even when no patient matches. The WHERE … IS NULL then keeps only those unmatched visits — the orphans that would break a foreign key on load.",
 
   solutionQuery: `SELECT e.encounter_id, e.patient_id
 FROM encounters e
@@ -189,12 +204,12 @@ export const HC_GRAIN = {
 
   schema: HC_SCHEMA,
 
-  prompt: "Verify encounter counts per patient. Return each patient's mrn and their number of encounters as encounter_count — patients with no encounters must show 0, and the join must not inflate the counts.",
+  prompt: "Verify how many visits each patient has. Return each patient's mrn and their visit total as encounter_count — patients with no visits must show 0, and the join must not inflate the counts.",
 
   hints: [
-    "LEFT JOIN encounters onto patients so patients with zero encounters are kept.",
-    "Count the encounter key, not rows: COUNT(e.encounter_id) returns 0 for a patient with no match, whereas COUNT(*) would wrongly return 1.",
-    "GROUP BY p.patient_id (not just mrn) so a duplicate patient record stays a separate row — that's how you SEE the dupe instead of hiding it.",
+    "LEFT JOIN the visits onto the patients so patients with zero visits are kept.",
+    "Count the visit key, not rows: COUNT(e.encounter_id) returns 0 for a no-visit patient (COUNT(*) would wrongly return 1). GROUP BY p.patient_id — not just mrn — so a duplicate patient stays a separate row.",
+    "SELECT p.mrn, COUNT(e.encounter_id) AS encounter_count FROM legacy_patients p LEFT JOIN encounters e ON p.patient_id = e.patient_id GROUP BY p.patient_id, p.mrn",
   ],
 
   answerKey: {
@@ -210,7 +225,9 @@ export const HC_GRAIN = {
     orderSensitive: false,
   },
 
-  explanation: "Two traps in one: use COUNT(e.encounter_id) (not COUNT(*)) so no-encounter patients show 0, and LEFT JOIN to keep every patient. Grouping by patient_id keeps the duplicate MRN001 as two rows — one with 2 encounters, one with 0 — proving WHY you dedup (question 2) before you trust per-patient totals. Joining at the wrong grain double-counts, the #1 silent error in SQL analytics.",
+  explanation: "Two traps in one: use COUNT(e.encounter_id) (not COUNT(*)) so no-visit patients show 0, and LEFT JOIN to keep every patient. Grouping by patient_id keeps the duplicate MRN001 as two rows — one with 2 visits, one with 0 — proving WHY you dedup (question 2) before you trust per-patient totals. Joining at the wrong grain double-counts, the #1 silent error in SQL analytics.",
+
+  plainSummary: "It uses a LEFT JOIN to attach visits to every patient (even those with none), GROUP BY to collapse to one row per patient, and COUNT(the visit id) to tally visits — counting the id instead of rows so a patient with no visits correctly shows 0 rather than 1.",
 
   solutionQuery: `SELECT p.mrn, COUNT(e.encounter_id) AS encounter_count
 FROM legacy_patients p
