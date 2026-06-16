@@ -20,7 +20,7 @@ INSERT INTO products VALUES
   hints: [
     "TRIM(category) removes leading and trailing spaces.",
     "UPPER(...) converts a string to all uppercase.",
-    "Nest them: UPPER(TRIM(category)).",
+    "SELECT id, UPPER(TRIM(category)) AS category_clean FROM products ORDER BY id",
   ],
 
   answerKey: {
@@ -35,6 +35,7 @@ INSERT INTO products VALUES
   },
 
   explanation: "TRIM removes whitespace from both ends of a string. UPPER converts every character to uppercase. Product 4 has spaces on both sides of 'office' — TRIM removes them before UPPER converts the result.",
+  plainSummary: "It uses TRIM to strip the spaces off each category, then UPPER to make every letter capital so the values are consistent.",
 
   solutionQuery: `SELECT id, UPPER(TRIM(category)) AS category_clean
 FROM products
@@ -59,7 +60,7 @@ INSERT INTO products VALUES
   hints: [
     "INSTR(sku, '-') returns the position of the hyphen character.",
     "SUBSTR(str, start, length) extracts a substring. Start at 1, take (hyphen_pos - 1) characters.",
-    "SUBSTR(sku, 1, INSTR(sku, '-') - 1)",
+    "SELECT id, SUBSTR(sku, 1, INSTR(sku, '-') - 1) AS prefix FROM products ORDER BY id",
   ],
 
   answerKey: {
@@ -74,6 +75,7 @@ INSERT INTO products VALUES
   },
 
   explanation: "INSTR(sku, '-') returns the index of the first hyphen — for 'wid-001' that's position 4. SUBSTR(sku, 1, 4-1) = SUBSTR(sku, 1, 3) = 'wid'. SQLite string positions are 1-based.",
+  plainSummary: "It uses INSTR to find where the hyphen is, then SUBSTR to grab the characters before it, giving you the prefix.",
 
   solutionQuery: `SELECT id, SUBSTR(sku, 1, INSTR(sku, '-') - 1) AS prefix
 FROM products
@@ -98,7 +100,7 @@ INSERT INTO products VALUES
   hints: [
     "LIKE '%mouse%' matches any string containing 'mouse' anywhere.",
     "SQLite's LIKE is case-insensitive for ASCII letters by default.",
-    "WHERE name LIKE '%mouse%'",
+    "SELECT id, name FROM products WHERE name LIKE '%mouse%'",
   ],
 
   answerKey: {
@@ -110,6 +112,7 @@ INSERT INTO products VALUES
   },
 
   explanation: "The % wildcard matches zero or more characters, so '%mouse%' matches any string with 'mouse' anywhere inside it. SQLite LIKE is case-insensitive for ASCII — 'Mouse', 'MOUSE', and 'mouse' all match. For Unicode case-insensitivity, combine with LOWER.",
+  plainSummary: "It uses LIKE with % wildcards on both sides to match any name that has the word 'mouse' anywhere inside it.",
 
   solutionQuery: `SELECT id, name
 FROM products
@@ -153,6 +156,7 @@ export const STRING_DATE_MEDIUM_1 = {
   },
 
   explanation: "strftime is SQLite's Swiss Army knife for date formatting. '%Y' gives a 4-digit year; '%m' gives a zero-padded 2-digit month. Other useful formats: '%d' (day), '%H' (hour), '%Y-%m-%d' (full date). The date column must be in ISO 8601 format (YYYY-MM-DD) for strftime to work correctly.",
+  plainSummary: "It uses strftime with '%Y' and '%m' to pull the year and month out of each date as separate text values.",
 
   solutionQuery: `SELECT name,
   strftime('%Y', event_date) AS year,
@@ -187,6 +191,7 @@ export const STRING_DATE_MEDIUM_2 = {
   },
 
   explanation: "date(date_string, modifier) performs date arithmetic. SQLite handles month boundaries: Jan 30 + 30 days = Mar 1 (crosses Feb 28 in non-leap 2025). Useful modifiers: '+N days', '-N months', 'start of month', 'start of year'.",
+  plainSummary: "It uses the date() function with a '+30 days' modifier to add 30 days to each event date and show the follow-up date.",
 
   solutionQuery: `SELECT name, event_date, date(event_date, '+30 days') AS follow_up_date
 FROM events`,
@@ -210,7 +215,7 @@ INSERT INTO contacts VALUES
   hints: [
     "INSTR(email, '@') returns the position of the '@' symbol.",
     "SUBSTR(email, pos + 1) returns everything after position pos.",
-    "Combine: SUBSTR(email, INSTR(email, '@') + 1)",
+    "SELECT name, SUBSTR(email, INSTR(email, '@') + 1) AS domain FROM contacts ORDER BY id",
   ],
 
   answerKey: {
@@ -225,6 +230,7 @@ INSERT INTO contacts VALUES
   },
 
   explanation: "INSTR(email, '@') returns the position of '@'. For 'alice@acme.com' that's position 6. SUBSTR(email, 6+1) = SUBSTR(email, 7) returns 'acme.com'. When SUBSTR has no length argument, it returns everything from the start position to the end of the string.",
+  plainSummary: "It uses INSTR to locate the '@' sign, then SUBSTR to take everything after it, which leaves just the email domain.",
 
   solutionQuery: `SELECT name, SUBSTR(email, INSTR(email, '@') + 1) AS domain
 FROM contacts
@@ -251,7 +257,7 @@ INSERT INTO projects VALUES
   hints: [
     "julianday(date) converts a date to a Julian day number (a real number).",
     "Subtracting two Julian day numbers gives the difference in days.",
-    "CAST(julianday(end_date) - julianday(start_date) AS INTEGER)",
+    "SELECT name, CAST(julianday(end_date) - julianday(start_date) AS INTEGER) AS duration_days FROM projects ORDER BY start_date",
   ],
 
   answerKey: {
@@ -266,6 +272,7 @@ INSERT INTO projects VALUES
   },
 
   explanation: "julianday() is SQLite's way to compute date differences — subtract two Julian day numbers to get days between them. Alpha: Jan 15 → Mar 20 = 65 days (2024 is a leap year). Beta: Apr 1 → Apr 30 = 29 days. Gamma: Jun 15 → Sep 10 = 87 days. Delta: Oct 1 → Dec 31 = 91 days.",
+  plainSummary: "It uses julianday() to turn each date into a number, subtracts the start from the end, and CASTs the result to a whole number of days.",
 
   solutionQuery: `SELECT name,
   CAST(julianday(end_date) - julianday(start_date) AS INTEGER) AS duration_days
@@ -304,6 +311,7 @@ INSERT INTO orders VALUES
   },
 
   explanation: "strftime('%Y-%m', date) truncates to month-level, letting GROUP BY aggregate rows that fall in the same month. Jan: 500+800=1300. Feb: 1200+600=1800. Mar: 900+1500+700=3100. This pattern (extract then group) is the standard way to do time-series aggregation in SQLite.",
+  plainSummary: "It uses strftime to shorten each date to its year-month, then GROUP BY with SUM to add up the amounts in each month.",
 
   solutionQuery: `SELECT strftime('%Y-%m', order_date) AS month, SUM(amount) AS total
 FROM orders
@@ -330,7 +338,7 @@ INSERT INTO phone_numbers VALUES
   hints: [
     "REPLACE(str, old, new) replaces all occurrences of old with new.",
     "Chain multiple REPLACEs to remove each character: REPLACE(REPLACE(...), '.', '')",
-    "Remove: '(', ')', ' ', '-', '.' — five nested REPLACEs.",
+    "SELECT person, REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone, '(', ''), ')', ''), ' ', ''), '-', ''), '.', '') AS digits_only FROM phone_numbers ORDER BY id",
   ],
 
   answerKey: {
@@ -346,6 +354,7 @@ INSERT INTO phone_numbers VALUES
   },
 
   explanation: "SQLite has no regex replace, so we chain REPLACE calls. Each call processes the result of the previous one. Order doesn't matter here since the characters don't overlap. This pattern appears often when normalising phone numbers, codes, or identifiers from external sources.",
+  plainSummary: "It uses several nested REPLACE calls to strip out each unwanted character — parentheses, spaces, dashes, and dots — leaving only the digits.",
 
   solutionQuery: `SELECT person,
   REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(

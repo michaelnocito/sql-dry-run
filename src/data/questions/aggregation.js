@@ -42,6 +42,7 @@ export const AGGREGATION_EASY_1 = {
   },
 
   explanation: "GROUP BY splits the table into groups by the specified column; COUNT(*) counts rows in each group. Each rep has 3 sales in this dataset. COUNT(*) counts all rows including NULLs — use COUNT(column) to count non-NULL values specifically.",
+  plainSummary: "It uses GROUP BY to pile the rows together by rep, and COUNT(*) to count how many rows are in each pile.",
 
   solutionQuery: `SELECT rep, COUNT(*) AS sale_count
 FROM sales
@@ -73,6 +74,7 @@ export const AGGREGATION_EASY_2 = {
   },
 
   explanation: "SUM aggregates all values in a column per group. West: 1000+2000+1500=4500. East: 500+1000+2500=4000. North: 600+1400+900=2900. The result has one row per distinct region value.",
+  plainSummary: "It uses GROUP BY to pile the rows together by region, and SUM to add up the amounts within each pile.",
 
   solutionQuery: `SELECT region, SUM(amount) AS total
 FROM sales
@@ -115,6 +117,7 @@ INSERT INTO orders VALUES
   },
 
   explanation: "COUNT(DISTINCT product) deduplicates before counting — Acme ordered Widget twice but it counts once. Acme: Widget+Gadget+Doohickey=3. Beta: Widget+Doohickey=2. Gamma: Gadget only=1.",
+  plainSummary: "It uses GROUP BY to pile the rows together by customer, and COUNT(DISTINCT product) to count the different products in each pile while ignoring repeats.",
 
   solutionQuery: `SELECT customer, COUNT(DISTINCT product) AS unique_products
 FROM orders
@@ -134,7 +137,7 @@ export const AGGREGATION_MEDIUM_1 = {
   hints: [
     "SUM and GROUP BY give totals per rep.",
     "HAVING filters groups after aggregation — unlike WHERE, which filters rows before grouping.",
-    "HAVING SUM(amount) > 3500",
+    "SELECT rep, SUM(amount) AS total FROM sales GROUP BY rep HAVING SUM(amount) > 3500 ORDER BY total DESC",
   ],
 
   answerKey: {
@@ -147,6 +150,7 @@ export const AGGREGATION_MEDIUM_1 = {
   },
 
   explanation: "HAVING is applied after aggregation, so it can reference aggregate functions like SUM. Alice: 4500, Bob: 4000 (both > 3500). Carol: 2900 is filtered out. Ordering by total DESC puts Alice first.",
+  plainSummary: "It uses GROUP BY to pile the rows together by rep, SUM to total each pile, HAVING to keep only the piles totalling more than 3,500, and ORDER BY to sort them from highest to lowest.",
 
   solutionQuery: `SELECT rep, SUM(amount) AS total
 FROM sales
@@ -184,6 +188,7 @@ export const AGGREGATION_MEDIUM_2 = {
   },
 
   explanation: "Multi-column GROUP BY creates one row per unique combination of the specified columns. Alice has no Q2 sales, so that combination doesn't appear. Alice Q1: 1000+2000=3000. Carol Q2: 600+1400=2000.",
+  plainSummary: "It uses GROUP BY on two columns to pile the rows together by each rep-and-quarter combination, SUM to total each pile, and ORDER BY to sort by rep then quarter.",
 
   solutionQuery: `SELECT rep, quarter, SUM(amount) AS total
 FROM sales
@@ -216,6 +221,7 @@ export const AGGREGATION_MEDIUM_3 = {
   },
 
   explanation: "MAX returns the largest value in each group. Alice's sales are 1000, 2000, 1500 — max is 2000. Bob's are 500, 1000, 2500 — max is 2500. MIN works the same way for smallest values.",
+  plainSummary: "It uses GROUP BY to pile the rows together by rep, and MAX to pick out the single highest amount in each pile.",
 
   solutionQuery: `SELECT rep, MAX(amount) AS top_sale
 FROM sales
@@ -235,7 +241,7 @@ export const AGGREGATION_HARD_1 = {
   hints: [
     "Use SUM with a CASE inside: SUM(CASE WHEN product='Widget' THEN amount ELSE 0 END).",
     "The ELSE 0 ensures non-Widget rows contribute 0 instead of being ignored.",
-    "Two separate SUM(CASE...) expressions in the same SELECT gives you two pivot columns.",
+    "SELECT rep, SUM(CASE WHEN product = 'Widget' THEN amount ELSE 0 END) AS widget_rev, SUM(CASE WHEN product = 'Gadget' THEN amount ELSE 0 END) AS gadget_rev FROM sales GROUP BY rep",
   ],
 
   answerKey: {
@@ -249,6 +255,7 @@ export const AGGREGATION_HARD_1 = {
   },
 
   explanation: "Conditional aggregation uses CASE inside an aggregate function to selectively include values. Alice Widget: 1000+1500=2500, Gadget: 2000. Bob Widget: 1000, Gadget: 500+2500=3000. Carol Widget: 600+900=1500, Gadget: 1400.",
+  plainSummary: "It uses GROUP BY to pile the rows together by rep, then SUM with a CASE inside to add up only the Widget amounts in one column and only the Gadget amounts in another.",
 
   solutionQuery: `SELECT rep,
   SUM(CASE WHEN product = 'Widget' THEN amount ELSE 0 END) AS widget_rev,
@@ -275,7 +282,7 @@ INSERT INTO quarterly_sales VALUES
   hints: [
     "Use conditional aggregation inside HAVING: SUM(CASE WHEN quarter='Q3' THEN amount ELSE 0 END).",
     "Compare Q3 conditional sum > Q1 conditional sum inside HAVING.",
-    "GROUP BY rep first, then HAVING SUM(Q3 amounts) > SUM(Q1 amounts).",
+    "SELECT rep FROM quarterly_sales GROUP BY rep HAVING SUM(CASE WHEN quarter = 'Q3' THEN amount ELSE 0 END) > SUM(CASE WHEN quarter = 'Q1' THEN amount ELSE 0 END)",
   ],
 
   answerKey: {
@@ -289,6 +296,7 @@ INSERT INTO quarterly_sales VALUES
   },
 
   explanation: "HAVING can contain complex expressions including conditional sums. Alice Q3=1500 > Q1=500 ✓. Bob Q3=800 < Q1=2000 ✗. Carol Q3=900 > Q1=600 ✓. Dave Q3=1800 > Q1=300 ✓.",
+  plainSummary: "It uses GROUP BY to pile the rows together by rep, then HAVING with two SUM-of-CASE expressions to keep only the reps whose total Q3 amount is bigger than their total Q1 amount.",
 
   solutionQuery: `SELECT rep
 FROM quarterly_sales
@@ -315,7 +323,7 @@ INSERT INTO transactions VALUES
   hints: [
     "COUNT(*) counts all rows; COUNT(DISTINCT rep) counts unique reps.",
     "Both can appear in the same SELECT alongside SUM.",
-    "GROUP BY region, then select region, SUM, COUNT(*), COUNT(DISTINCT rep).",
+    "SELECT region, SUM(amount) AS total, COUNT(*) AS sale_count, COUNT(DISTINCT rep) AS rep_count FROM transactions GROUP BY region ORDER BY region",
   ],
 
   answerKey: {
@@ -330,6 +338,7 @@ INSERT INTO transactions VALUES
   },
 
   explanation: "COUNT(*) and COUNT(DISTINCT col) serve different purposes in the same query. East: 3 transactions by 3 different reps (Bob+Carol+Alice). West: 3 transactions but only 2 reps (Alice appears twice). East total: 800+1200+600=2600.",
+  plainSummary: "It uses GROUP BY to pile the rows together by region, then SUM to total the amounts, COUNT(*) to count all the transactions, and COUNT(DISTINCT rep) to count the different reps in each pile.",
 
   solutionQuery: `SELECT region,
   SUM(amount)           AS total,

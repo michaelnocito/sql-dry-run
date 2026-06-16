@@ -44,6 +44,8 @@ export const JOINS_EASY_1 = {
 
   explanation: "JOIN (INNER JOIN) combines rows from two tables where the ON condition matches. Each employee's dept_id matches a department's id, producing one output row per employee. The ON clause defines the relationship.",
 
+  plainSummary: "It uses an INNER JOIN to match each employee up with their department, then shows the employee's name next to the department's name.",
+
   solutionQuery: `SELECT e.name, d.dept_name
 FROM employees e
 JOIN departments d ON e.dept_id = d.id`,
@@ -71,7 +73,7 @@ INSERT INTO orders VALUES
   hints: [
     "LEFT JOIN keeps ALL rows from the left table, even when there's no match on the right.",
     "Customers 4 (Delta) and 5 (Echo) have no orders — they'll appear with NULL amount.",
-    "FROM customers c LEFT JOIN orders o ON c.id = o.customer_id",
+    "SELECT c.name, o.amount FROM customers c LEFT JOIN orders o ON c.id = o.customer_id",
   ],
 
   answerKey: {
@@ -88,6 +90,8 @@ INSERT INTO orders VALUES
   },
 
   explanation: "LEFT JOIN returns all rows from the left table (customers) plus matched rows from the right (orders). Unmatched customers get NULL for every column from the orders table. INNER JOIN would silently drop Delta and Echo.",
+
+  plainSummary: "It uses a LEFT JOIN to line up every customer against their orders, keeping customers even when no order matches; unmatched ones get NULL for the amount.",
 
   solutionQuery: `SELECT c.name, o.amount
 FROM customers c
@@ -118,6 +122,8 @@ export const JOINS_EASY_3 = {
   },
 
   explanation: "JOIN first combines the tables, then WHERE filters the combined result. Only Engineering is in SF, so only Alice and Carol appear.",
+
+  plainSummary: "It uses a JOIN to attach each employee to their department, then a WHERE filter to keep only those whose department location is SF.",
 
   solutionQuery: `SELECT e.name, e.salary
 FROM employees e
@@ -154,7 +160,7 @@ INSERT INTO floors VALUES
   hints: [
     "Chain two JOINs: employees → departments → floors.",
     "First join: ON e.dept_id = d.id. Second join: ON d.floor_id = f.id.",
-    "SELECT e.name, d.dept_name, f.building FROM employees e JOIN departments d ... JOIN floors f ...",
+    "SELECT e.name, d.dept_name, f.building FROM employees e JOIN departments d ON e.dept_id = d.id JOIN floors f ON d.floor_id = f.id",
   ],
 
   answerKey: {
@@ -170,6 +176,8 @@ INSERT INTO floors VALUES
   },
 
   explanation: "Chained JOINs resolve left-to-right. Engineering uses floor_id=2 (Tower B). Marketing uses floor_id=3 (Tower A floor 5). Sales uses floor_id=1 (Tower A floor 1). Both Marketing and Sales are in Tower A but different floors.",
+
+  plainSummary: "It chains two JOINs to hop from each employee to their department and then to the floor record, so it can show the name, department, and building together.",
 
   solutionQuery: `SELECT e.name, d.dept_name, f.building
 FROM employees e
@@ -197,7 +205,7 @@ INSERT INTO staff VALUES
   hints: [
     "A self-join joins a table to itself using two aliases: FROM staff e JOIN staff m ON ...",
     "The join condition links each employee's mgr_id to the manager's id: e.mgr_id = m.id.",
-    "INNER JOIN automatically excludes Alice and Dave (mgr_id IS NULL — no match).",
+    "SELECT e.name AS employee, m.name AS manager FROM staff e JOIN staff m ON e.mgr_id = m.id",
   ],
 
   answerKey: {
@@ -212,6 +220,8 @@ INSERT INTO staff VALUES
   },
 
   explanation: "A self-join uses two aliases for the same table — here e for employees and m for managers. INNER JOIN on e.mgr_id = m.id naturally excludes Alice and Dave because their mgr_id is NULL, which doesn't match any id.",
+
+  plainSummary: "It uses a self-join — joining the staff list to itself under two nicknames — to pair each person with their manager; people with no manager drop out because there's nothing to match.",
 
   solutionQuery: `SELECT e.name AS employee, m.name AS manager
 FROM staff e
@@ -229,7 +239,7 @@ export const JOINS_MEDIUM_3 = {
   hints: [
     "LEFT JOIN departments → employees keeps all departments even if headcount would be 0.",
     "GROUP BY d.id, d.dept_name groups after the join.",
-    "COUNT(e.id) counts matched employees (NULL-safe: counts non-NULL e.id values).",
+    "SELECT d.dept_name, COUNT(e.id) AS headcount, AVG(e.salary) AS avg_salary FROM departments d LEFT JOIN employees e ON e.dept_id = d.id GROUP BY d.id, d.dept_name",
   ],
 
   answerKey: {
@@ -243,6 +253,8 @@ export const JOINS_MEDIUM_3 = {
   },
 
   explanation: "JOIN then GROUP BY is a common reporting pattern. Engineering: Alice(90k)+Carol(80k), avg=(90000+80000)/2=85000. Marketing: Bob(75k)+Eve(70k), avg=72500. COUNT(e.id) instead of COUNT(*) correctly handles departments with no employees (counts NULL e.id as 0).",
+
+  plainSummary: "It uses a LEFT JOIN plus GROUP BY to bucket employees by department, then counts the people and averages their salaries per department, keeping departments that have nobody.",
 
   solutionQuery: `SELECT d.dept_name,
   COUNT(e.id)    AS headcount,
@@ -272,7 +284,7 @@ INSERT INTO payments VALUES (1,1,1000),(2,3,1500);`,
   hints: [
     "Chain two LEFT JOINs: customers → orders → payments.",
     "COALESCE(SUM(p.paid), 0) converts NULL (no payments) to 0.",
-    "COUNT(o.id) counts non-NULL order ids — safely returns 0 for customers with no orders.",
+    "SELECT c.name, COUNT(o.id) AS order_count, COALESCE(SUM(p.paid), 0) AS total_paid FROM customers c LEFT JOIN orders o ON o.customer_id = c.id LEFT JOIN payments p ON p.order_id = o.id GROUP BY c.id, c.name ORDER BY c.name",
   ],
 
   answerKey: {
@@ -287,6 +299,8 @@ INSERT INTO payments VALUES (1,1,1000),(2,3,1500);`,
   },
 
   explanation: "Chained LEFT JOINs preserve all customers. Acme has 2 orders, payment on order 1 only (1000). Beta has 1 order, partially paid (1500 of 2000). Gamma has 1 order, unpaid (0). Delta has no orders (0/0). COALESCE handles the NULL-to-zero conversion for SUM.",
+
+  plainSummary: "It chains two LEFT JOINs from customers to orders to payments, then groups per customer to count orders and add up payments, using COALESCE to turn missing totals into 0 so customers with no orders still show up.",
 
   solutionQuery: `SELECT c.name,
   COUNT(o.id)            AS order_count,
@@ -309,7 +323,7 @@ export const JOINS_HARD_2 = {
   hints: [
     "One approach: correlated subquery in WHERE — filter to employees whose salary equals the dept maximum.",
     "WHERE e.salary = (SELECT MAX(salary) FROM employees e2 WHERE e2.dept_id = e.dept_id)",
-    "Another: JOIN with a derived table that computes MAX per dept_id first.",
+    "SELECT d.dept_name, e.name AS top_earner FROM employees e JOIN departments d ON e.dept_id = d.id WHERE e.salary = (SELECT MAX(salary) FROM employees e2 WHERE e2.dept_id = e.dept_id)",
   ],
 
   answerKey: {
@@ -323,6 +337,8 @@ export const JOINS_HARD_2 = {
   },
 
   explanation: "The correlated subquery approach filters to rows where the salary matches the max for that department. Engineering max=90000 (Alice). Marketing max=75000 (Bob). Sales: Dave is the only employee. A derived table JOIN is an equally valid solution.",
+
+  plainSummary: "It joins employees to their departments and uses a per-department MAX(salary) subquery in the WHERE clause to keep only the highest earner in each department.",
 
   solutionQuery: `SELECT d.dept_name, e.name AS top_earner
 FROM employees e
@@ -355,7 +371,7 @@ INSERT INTO departments VALUES
   hints: [
     "LEFT JOIN departments to employees — unmatched departments get NULL for employee columns.",
     "Filter with WHERE e.id IS NULL to keep only unmatched departments.",
-    "This pattern is called an anti-join.",
+    "SELECT d.dept_name FROM departments d LEFT JOIN employees e ON e.dept_id = d.id WHERE e.id IS NULL",
   ],
 
   answerKey: {
@@ -367,6 +383,8 @@ INSERT INTO departments VALUES
   },
 
   explanation: "The anti-join pattern: LEFT JOIN then WHERE right-side column IS NULL. LEFT JOIN keeps all departments; WHERE e.id IS NULL filters to only the ones with no matching employee. Research (dept 4) has no employees. NOT IN or NOT EXISTS are alternative approaches.",
+
+  plainSummary: "It uses the anti-join pattern — LEFT JOIN then WHERE the employee side IS NULL — to keep only departments that found no matching employee.",
 
   solutionQuery: `SELECT d.dept_name
 FROM departments d

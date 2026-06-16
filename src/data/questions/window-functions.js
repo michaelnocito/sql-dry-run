@@ -20,7 +20,7 @@ export const WINDOW_EASY_1 = {
   hints: [
     "ROW_NUMBER() OVER (ORDER BY medals DESC) assigns sequential ranks with no ties.",
     "The OVER clause defines the window — ORDER BY sets the ranking order.",
-    "No PARTITION BY means the window spans all rows.",
+    "SELECT name, medals, ROW_NUMBER() OVER (ORDER BY medals DESC) AS rank FROM athletes ORDER BY rank",
   ],
 
   answerKey: {
@@ -37,6 +37,7 @@ export const WINDOW_EASY_1 = {
   },
 
   explanation: "ROW_NUMBER assigns unique sequential integers regardless of ties. ORDER BY medals DESC in the OVER clause sorts highest-medal athletes to rank 1. Unlike RANK(), ROW_NUMBER never produces duplicate rank values.",
+  plainSummary: "It uses ROW_NUMBER() OVER (ORDER BY medals DESC) to stamp each row with a rank, 1 for the most medals, without collapsing the rows together.",
 
   solutionQuery: `SELECT name, medals,
   ROW_NUMBER() OVER (ORDER BY medals DESC) AS rank
@@ -59,7 +60,7 @@ INSERT INTO monthly_revenue VALUES
   hints: [
     "SUM(revenue) OVER (ORDER BY month_num) computes a cumulative sum.",
     "The default window frame for ORDER BY is ROWS UNBOUNDED PRECEDING TO CURRENT ROW — that's the running total.",
-    "ORDER BY month_num in both OVER and the final ORDER BY ensures chronological output.",
+    "SELECT month, revenue, SUM(revenue) OVER (ORDER BY month_num) AS running_total FROM monthly_revenue ORDER BY month_num",
   ],
 
   answerKey: {
@@ -75,6 +76,7 @@ INSERT INTO monthly_revenue VALUES
   },
 
   explanation: "SUM() OVER (ORDER BY ...) with no PARTITION BY accumulates across all rows in the order specified. Jan:900, Feb:900+1200=2100, Mar:2100+900=3000, Apr:3000+1500=4500, May:4500+1200=5700.",
+  plainSummary: "It uses SUM(revenue) OVER (ORDER BY month_num) to add up revenue as it goes, so each row shows the total of itself plus every earlier month.",
 
   solutionQuery: `SELECT month, revenue,
   SUM(revenue) OVER (ORDER BY month_num) AS running_total
@@ -97,7 +99,7 @@ INSERT INTO scores VALUES
   hints: [
     "DENSE_RANK() assigns the same rank to tied values and does NOT skip the next rank.",
     "Alice and Carol both scored 95 — both get rank 1. Bob and Eve both scored 88 — both get rank 2.",
-    "ORDER BY score DESC, name ASC in the final ORDER BY for consistent output.",
+    "SELECT name, score, DENSE_RANK() OVER (ORDER BY score DESC) AS dense_rank FROM scores ORDER BY score DESC, name ASC",
   ],
 
   answerKey: {
@@ -113,6 +115,7 @@ INSERT INTO scores VALUES
   },
 
   explanation: "DENSE_RANK gives tied rows the same rank and then continues sequentially — no gap after the tie. Here ranks go 1,1,2,2,3. RANK() would give 1,1,3,3,5 (skipping after each tie). ROW_NUMBER would give 1,2,3,4,5 (always unique).",
+  plainSummary: "It uses DENSE_RANK() OVER (ORDER BY score DESC) to rank students from the top score down, giving tied scores the same rank and never leaving a gap afterward.",
 
   solutionQuery: `SELECT name, score,
   DENSE_RANK() OVER (ORDER BY score DESC) AS dense_rank
@@ -133,7 +136,7 @@ export const WINDOW_MEDIUM_1 = {
   hints: [
     "PARTITION BY country splits the window into separate groups per country.",
     "ROW_NUMBER() OVER (PARTITION BY country ORDER BY medals DESC) restarts ranks for each country.",
-    "Order the final result by country, then medals DESC.",
+    "SELECT name, country, medals, ROW_NUMBER() OVER (PARTITION BY country ORDER BY medals DESC) AS country_rank FROM athletes ORDER BY country, medals DESC",
   ],
 
   answerKey: {
@@ -150,6 +153,7 @@ export const WINDOW_MEDIUM_1 = {
   },
 
   explanation: "PARTITION BY creates separate windows for each country — ranks reset to 1 for each new country group. Without PARTITION BY, you'd get a global rank instead of per-country. Each country has exactly 2 athletes here, so ranks are 1 and 2 per group.",
+  plainSummary: "It uses ROW_NUMBER() OVER (PARTITION BY country ORDER BY medals DESC) to rank athletes separately inside each country, restarting at 1 for every new country.",
 
   solutionQuery: `SELECT name, country, medals,
   ROW_NUMBER() OVER (PARTITION BY country ORDER BY medals DESC) AS country_rank
@@ -172,7 +176,7 @@ INSERT INTO monthly_revenue VALUES
   hints: [
     "LAG(revenue) OVER (ORDER BY month_num) returns the previous row's revenue.",
     "For the first row (Jan) there is no previous row — LAG returns NULL.",
-    "Change = revenue - LAG(revenue): Jan's change is also NULL.",
+    "SELECT month, revenue, LAG(revenue) OVER (ORDER BY month_num) AS prev_revenue, revenue - LAG(revenue) OVER (ORDER BY month_num) AS change FROM monthly_revenue ORDER BY month_num",
   ],
 
   answerKey: {
@@ -188,6 +192,7 @@ INSERT INTO monthly_revenue VALUES
   },
 
   explanation: "LAG(col) OVER (ORDER BY ...) accesses the previous row's value. LEAD(col) would access the next row. Both return NULL when there is no preceding (or following) row. Change = current - previous: Feb: 1200-900=+300, Mar: 900-1200=-300.",
+  plainSummary: "It uses LAG(revenue) OVER (ORDER BY month_num) to peek at the prior month's revenue on each row, then subtracts it to show how much revenue changed.",
 
   solutionQuery: `SELECT month, revenue,
   LAG(revenue) OVER (ORDER BY month_num) AS prev_revenue,
@@ -207,7 +212,7 @@ export const WINDOW_MEDIUM_3 = {
   hints: [
     "NTILE(n) OVER (ORDER BY ...) divides rows into n roughly equal groups.",
     "NTILE(3) ORDER BY medals DESC puts the top medal earners in tier 1.",
-    "With 6 athletes and 3 groups, each tier gets exactly 2 athletes.",
+    "SELECT name, medals, NTILE(3) OVER (ORDER BY medals DESC) AS tier FROM athletes ORDER BY medals DESC",
   ],
 
   answerKey: {
@@ -224,6 +229,7 @@ export const WINDOW_MEDIUM_3 = {
   },
 
   explanation: "NTILE(n) distributes rows as evenly as possible into n buckets. With 6 rows and n=3, each bucket gets exactly 2 rows. The bucket number (1,2,3) is assigned in the ORDER BY order. Useful for percentile-based segmentation.",
+  plainSummary: "It uses NTILE(3) OVER (ORDER BY medals DESC) to split the athletes into three roughly equal bands by medal count, with the top earners landing in band 1.",
 
   solutionQuery: `SELECT name, medals,
   NTILE(3) OVER (ORDER BY medals DESC) AS tier
@@ -248,7 +254,7 @@ INSERT INTO monthly_revenue VALUES
   hints: [
     "Use a window frame: ROWS BETWEEN 2 PRECEDING AND CURRENT ROW.",
     "AVG(revenue) OVER (ORDER BY month_num ROWS BETWEEN 2 PRECEDING AND CURRENT ROW)",
-    "For Jan and Feb, the window is smaller (1 or 2 rows) — SQLite averages what's available.",
+    "SELECT month, revenue, AVG(revenue) OVER (ORDER BY month_num ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) AS rolling_avg FROM monthly_revenue ORDER BY month_num",
   ],
 
   answerKey: {
@@ -264,6 +270,7 @@ INSERT INTO monthly_revenue VALUES
   },
 
   explanation: "ROWS BETWEEN 2 PRECEDING AND CURRENT ROW defines the frame explicitly. Jan: avg(900)=900. Feb: avg(900,1200)=1050. Mar: avg(900,1200,900)=1000. Apr: avg(1200,900,1500)=1200. May: avg(900,1500,1200)=1200.",
+  plainSummary: "It uses AVG(revenue) OVER (...) with a sliding window of the current month and the two before it to give a smoothed three-month rolling average.",
 
   solutionQuery: `SELECT month, revenue,
   AVG(revenue) OVER (
@@ -290,7 +297,7 @@ INSERT INTO sales_reps VALUES
   hints: [
     "RANK() skips after ties: two people tied for 1st means the next rank is 3rd.",
     "DENSE_RANK() does not skip: two people tied for 1st means the next rank is 2nd.",
-    "Both take OVER (ORDER BY revenue DESC) — no PARTITION BY for global ranking.",
+    "SELECT name, revenue, RANK() OVER (ORDER BY revenue DESC) AS rnk, DENSE_RANK() OVER (ORDER BY revenue DESC) AS dense_rnk FROM sales_reps ORDER BY revenue DESC, name ASC",
   ],
 
   answerKey: {
@@ -307,6 +314,7 @@ INSERT INTO sales_reps VALUES
   },
 
   explanation: "Carol and Eve both have 80000 — they share rank 2. With RANK, the next rank is 4 (skipping 3). With DENSE_RANK, the next rank is 3 (no skip). Bob and Frank tie at 75000: RANK gives 4, DENSE_RANK gives 3. Dave is last in both.",
+  plainSummary: "It uses RANK() and DENSE_RANK() over the same revenue ordering side by side, so you can see how RANK leaves gaps after ties while DENSE_RANK does not.",
 
   solutionQuery: `SELECT name, revenue,
   RANK()       OVER (ORDER BY revenue DESC) AS rnk,
@@ -331,7 +339,7 @@ INSERT INTO sales_reps VALUES
   hints: [
     "You can't use WHERE rn = 1 directly on a window function — you need a CTE first.",
     "CTE: assign ROW_NUMBER() OVER (PARTITION BY region ORDER BY revenue DESC) AS rn.",
-    "Main query: SELECT from the CTE WHERE rn = 1.",
+    "WITH ranked AS (SELECT name, region, revenue, ROW_NUMBER() OVER (PARTITION BY region ORDER BY revenue DESC) AS rn FROM sales_reps) SELECT region, name, revenue FROM ranked WHERE rn = 1 ORDER BY region",
   ],
 
   answerKey: {
@@ -345,6 +353,7 @@ INSERT INTO sales_reps VALUES
   },
 
   explanation: "Window functions can't appear in WHERE — the CTE materialises the window result first, then WHERE filters it. East top earner: Bob (75000 > Dave 60000). North: Eve (85000 > Frank 70000). West: Alice (90000 > Carol 80000).",
+  plainSummary: "It uses a CTE that numbers reps within each region by revenue with ROW_NUMBER(), then keeps only the number-1 row per region to return each region's top earner.",
 
   solutionQuery: `WITH ranked AS (
   SELECT name, region, revenue,

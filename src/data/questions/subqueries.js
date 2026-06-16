@@ -23,9 +23,9 @@ export const SUBQUERIES_EASY_1 = {
   prompt: "List the names of all products currently in the cart. Use a subquery with IN.",
 
   hints: [
-    "First figure out which product_ids are in the cart: SELECT product_id FROM cart.",
-    "Then use that as a subquery: WHERE id IN (SELECT product_id FROM cart).",
-    "IN checks whether a value appears in a list or subquery result.",
+    "First figure out which product ids are in the cart with a small inner query.",
+    "Then use that as a subquery: WHERE id IN (...).",
+    "SELECT name FROM products WHERE id IN (SELECT product_id FROM cart)",
   ],
 
   answerKey: {
@@ -40,6 +40,7 @@ export const SUBQUERIES_EASY_1 = {
   },
 
   explanation: "IN (subquery) is equivalent to joining and filtering but often reads more clearly. The subquery SELECT product_id FROM cart returns {1,3,6,7}, and WHERE id IN (...) keeps only matching products.",
+  plainSummary: "It uses IN with a subquery to keep only the products whose id shows up in the list of ids the inner query pulls from the cart.",
 
   solutionQuery: `SELECT name
 FROM products
@@ -57,7 +58,7 @@ export const SUBQUERIES_EASY_2 = {
   hints: [
     "NOT IN is the inverse of IN — it keeps rows where the value is absent from the subquery result.",
     "SELECT product_id FROM cart returns {1,3,6,7} — you want products whose id is NOT in that set.",
-    "WHERE id NOT IN (SELECT product_id FROM cart)",
+    "SELECT name FROM products WHERE id NOT IN (SELECT product_id FROM cart)",
   ],
 
   answerKey: {
@@ -71,6 +72,7 @@ export const SUBQUERIES_EASY_2 = {
   },
 
   explanation: "NOT IN excludes rows whose value appears in the subquery result. Products 1,3,6,7 are in the cart, so ids 2 (Phone), 4 (Chair), and 5 (Monitor) remain. Warning: NOT IN returns no rows if the subquery contains any NULL values — use NOT EXISTS as a safer alternative in production.",
+  plainSummary: "It uses NOT IN with a subquery to keep only the products whose id does not appear in the list of ids the inner query pulls from the cart.",
 
   solutionQuery: `SELECT name
 FROM products
@@ -84,12 +86,12 @@ export const SUBQUERIES_EASY_3 = {
   schema: `CREATE TABLE items (id INTEGER, name TEXT, price INTEGER);
 INSERT INTO items VALUES (1,'Alpha',100),(2,'Beta',200),(3,'Gamma',300),(4,'Delta',400);`,
 
-  prompt: "For each item, show its name and the difference between its price and the average price of all items. Return name and price_diff.",
+  prompt: "For each item, show its name and the difference between its price and the average price across all items. Return name and price_diff.",
 
   hints: [
-    "A scalar subquery (SELECT AVG(price) FROM items) computes a single value you can use in expressions.",
-    "price - (SELECT AVG(price) FROM items) gives the difference for each row.",
-    "The subquery runs once; the result is used for every row.",
+    "A scalar subquery that computes AVG(price) gives back a single value you can use in expressions.",
+    "Subtract that average from each row's price to get the difference.",
+    "SELECT name, price - (SELECT AVG(price) FROM items) AS price_diff FROM items ORDER BY id",
   ],
 
   answerKey: {
@@ -104,6 +106,7 @@ INSERT INTO items VALUES (1,'Alpha',100),(2,'Beta',200),(3,'Gamma',300),(4,'Delt
   },
 
   explanation: "A scalar subquery returns a single value and can appear in SELECT expressions. AVG(price) = (100+200+300+400)/4 = 250. Each item's price_diff = price - 250. Negative means below average, positive means above.",
+  plainSummary: "It uses a scalar subquery — a tiny query that returns one number, the overall average price — and subtracts that from each row's price to show how far above or below average it is.",
 
   solutionQuery: `SELECT name, price - (SELECT AVG(price) FROM items) AS price_diff
 FROM items
@@ -135,8 +138,8 @@ export const SUBQUERIES_MEDIUM_1 = {
 
   hints: [
     "A correlated subquery references the outer query: SELECT AVG(salary) FROM employees e2 WHERE e2.dept_id = e.dept_id.",
-    "This subquery runs once per row of the outer query.",
-    "Place the correlated subquery in the SELECT clause.",
+    "This subquery runs once per row of the outer query — place it in the SELECT clause.",
+    "SELECT name, salary, (SELECT AVG(salary) FROM employees e2 WHERE e2.dept_id = e.dept_id) AS dept_avg FROM employees e ORDER BY name",
   ],
 
   answerKey: {
@@ -152,6 +155,7 @@ export const SUBQUERIES_MEDIUM_1 = {
   },
 
   explanation: "A correlated subquery references the outer query's row — here e.dept_id ties the inner query to each employee's department. Engineering avg: (90000+80000)/2=85000. Marketing avg: (75000+70000)/2=72500. Dave is the only Sales employee, so his dept_avg equals his own salary.",
+  plainSummary: "It uses a correlated subquery — an inner query that re-runs for each employee — to work out that person's own department average and show it next to their salary.",
 
   solutionQuery: `SELECT name, salary,
   (SELECT AVG(salary) FROM employees e2 WHERE e2.dept_id = e.dept_id) AS dept_avg
@@ -170,7 +174,7 @@ export const SUBQUERIES_MEDIUM_2 = {
   hints: [
     "A derived table is a subquery in the FROM clause — give it an alias.",
     "Inner query: SELECT dept_id, SUM(salary) AS total_salary FROM employees GROUP BY dept_id.",
-    "Then JOIN that result to departments on id = dept_id.",
+    "SELECT d.dept_name, t.total_salary FROM departments d JOIN (SELECT dept_id, SUM(salary) AS total_salary FROM employees GROUP BY dept_id) t ON d.id = t.dept_id ORDER BY d.dept_name",
   ],
 
   answerKey: {
@@ -184,6 +188,7 @@ export const SUBQUERIES_MEDIUM_2 = {
   },
 
   explanation: "A derived table (inline view) lets you pre-aggregate data and join the result. The subquery groups employees by dept_id and sums salaries; the outer query joins that back to departments for the name. Engineering: 90000+80000=170000. Marketing: 75000+70000=145000.",
+  plainSummary: "It uses a subquery in the FROM clause to first total up each department's salaries, then joins that summary to the department names to show the spend per department.",
 
   solutionQuery: `SELECT d.dept_name, t.total_salary
 FROM departments d
@@ -206,7 +211,7 @@ export const SUBQUERIES_MEDIUM_3 = {
   hints: [
     "WITH avg_sal AS (SELECT AVG(salary) AS avg FROM employees) defines a named result you can reference.",
     "Then in the main query: FROM employees, avg_sal WHERE salary > avg.",
-    "CTEs make complex queries easier to read by naming intermediate steps.",
+    "WITH avg_sal AS (SELECT AVG(salary) AS avg FROM employees) SELECT name, salary FROM employees, avg_sal WHERE salary > avg ORDER BY salary DESC",
   ],
 
   answerKey: {
@@ -219,6 +224,7 @@ export const SUBQUERIES_MEDIUM_3 = {
   },
 
   explanation: "A CTE (Common Table Expression) names a temporary result set. Average salary = (90000+75000+80000+65000+70000)/5 = 76000. Alice (90000) and Carol (80000) are above the average. Bob (75000), Eve (70000), and Dave (65000) are not.",
+  plainSummary: "It uses a CTE (a named WITH block) to first calculate the company-wide average salary, then keeps only the employees who earn more than that, highest first.",
 
   solutionQuery: `WITH avg_sal AS (
   SELECT AVG(salary) AS avg FROM employees
@@ -242,7 +248,7 @@ export const SUBQUERIES_HARD_1 = {
   hints: [
     "CTE 1: dept_avgs — SELECT dept_id, AVG(salary) AS dept_avg FROM employees GROUP BY dept_id.",
     "CTE 2: above_avg — JOIN employees to dept_avgs WHERE salary > dept_avg.",
-    "Main query: JOIN above_avg with departments for the dept_name.",
+    "WITH dept_avgs AS (SELECT dept_id, AVG(salary) AS dept_avg FROM employees GROUP BY dept_id), above_avg AS (SELECT e.name, e.dept_id, e.salary FROM employees e JOIN dept_avgs d ON e.dept_id = d.dept_id WHERE e.salary > d.dept_avg) SELECT a.name, d.dept_name, a.salary FROM above_avg a JOIN departments d ON a.dept_id = d.id ORDER BY a.salary DESC",
   ],
 
   answerKey: {
@@ -255,6 +261,7 @@ export const SUBQUERIES_HARD_1 = {
   },
 
   explanation: "Multiple CTEs keep each logical step named and readable. Engineering avg=85000: Alice(90k) is above, Carol(80k) is below. Marketing avg=72500: Bob(75k) is above, Eve(70k) is below. Dave is the only Sales employee — he equals the dept average, not above it.",
+  plainSummary: "It uses two stacked CTEs — one to compute each department's average salary, another to pick the employees who beat their own department's average — then looks up the department names for the result.",
 
   solutionQuery: `WITH dept_avgs AS (
   SELECT dept_id, AVG(salary) AS dept_avg
@@ -288,7 +295,7 @@ INSERT INTO orders VALUES
   hints: [
     "EXISTS (subquery) is true if the subquery returns any rows — use it for 'at least one order'.",
     "NOT EXISTS is the inverse — true when the subquery returns no rows.",
-    "UNION combines results from two SELECT statements (removing duplicates).",
+    "SELECT name, 'yes' AS has_order FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id) UNION SELECT name, 'no' AS has_order FROM customers c WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id) ORDER BY name",
   ],
 
   answerKey: {
@@ -303,6 +310,7 @@ INSERT INTO orders VALUES
   },
 
   explanation: "EXISTS is safer than IN when the subquery could return NULLs. NOT EXISTS is safer than NOT IN for the same reason. UNION combines both result sets. Acme, Beta, Gamma have orders; Delta does not.",
+  plainSummary: "It uses EXISTS and NOT EXISTS — checks that ask 'does this customer have any matching order?' — and stitches the yes and no groups together with UNION.",
 
   solutionQuery: `SELECT name, 'yes' AS has_order FROM customers c
 WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id)
@@ -323,7 +331,7 @@ export const SUBQUERIES_HARD_3 = {
   hints: [
     "CTE: rank each employee with ROW_NUMBER() OVER (PARTITION BY dept_id ORDER BY salary DESC) AS rn.",
     "Main query: JOIN the ranked CTE with departments WHERE rn <= 2.",
-    "ROW_NUMBER assigns unique ranks even for ties — no shared positions.",
+    "WITH ranked AS (SELECT name, dept_id, salary, ROW_NUMBER() OVER (PARTITION BY dept_id ORDER BY salary DESC) AS rn FROM employees) SELECT d.dept_name, r.name, r.salary FROM ranked r JOIN departments d ON r.dept_id = d.id WHERE r.rn <= 2 ORDER BY d.dept_name, r.salary DESC",
   ],
 
   answerKey: {
@@ -339,6 +347,7 @@ export const SUBQUERIES_HARD_3 = {
   },
 
   explanation: "The CTE + window function pattern is the standard way to filter on a window function result — you can't use a window function directly in WHERE. ROW_NUMBER PARTITION BY dept_id ranks within each department; WHERE rn <= 2 keeps the top two. Sales has only one employee so only one row appears.",
+  plainSummary: "It uses a CTE with the ROW_NUMBER window function to rank earners within each department, then keeps the top two per department and attaches the department name.",
 
   solutionQuery: `WITH ranked AS (
   SELECT name, dept_id, salary,

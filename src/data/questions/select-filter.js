@@ -22,7 +22,7 @@ INSERT INTO products VALUES
   hints: [
     "Two conditions go in WHERE joined by AND: category = 'Electronics' AND in_stock = 1.",
     "ORDER BY price ASC (or just ORDER BY price — ASC is the default).",
-    "SELECT name, price FROM products WHERE ... ORDER BY price",
+    "SELECT name, price FROM products WHERE category = 'Electronics' AND in_stock = 1 ORDER BY price ASC",
   ],
 
   answerKey: {
@@ -35,6 +35,7 @@ INSERT INTO products VALUES
   },
 
   explanation: "WHERE filters rows before sorting. AND requires both conditions to be true simultaneously. ORDER BY price ASC returns the cheapest qualifying item first.",
+  plainSummary: "It uses WHERE with AND to keep only rows that are both Electronics and in stock, then ORDER BY to line them up from cheapest to priciest.",
 
   solutionQuery: `SELECT name, price
 FROM products
@@ -77,6 +78,7 @@ INSERT INTO customers VALUES
   },
 
   explanation: "DISTINCT deduplanes the result set — even though 6 customers exist across 3 cities, only 3 unique city values are returned. It operates on the selected columns after the SELECT keyword.",
+  plainSummary: "It uses SELECT DISTINCT to collapse repeated city values down to one of each, then ORDER BY to sort those names alphabetically.",
 
   solutionQuery: `SELECT DISTINCT city
 FROM customers
@@ -118,6 +120,7 @@ INSERT INTO items VALUES
   },
 
   explanation: "BETWEEN is inclusive on both ends — it is exactly equivalent to price >= 300 AND price <= 500. Chair (250) falls below the range; Phone (699) and Laptop (999) fall above it.",
+  plainSummary: "It uses BETWEEN to keep only rows whose price lands inside the 300-to-500 range (both ends counted), then ORDER BY to sort them cheapest first.",
 
   solutionQuery: `SELECT name, price
 FROM items
@@ -149,7 +152,7 @@ INSERT INTO orders VALUES
   hints: [
     "Filter to status = 'closed' first with WHERE, then group by rep_name.",
     "HAVING filters groups after aggregation — HAVING SUM(amount) > 3000.",
-    "WHERE status = 'closed' happens before GROUP BY; HAVING SUM(amount) > 3000 happens after.",
+    "SELECT rep_name, SUM(amount) AS total_revenue FROM orders WHERE status = 'closed' GROUP BY rep_name HAVING SUM(amount) > 3000",
   ],
 
   answerKey: {
@@ -162,6 +165,7 @@ INSERT INTO orders VALUES
   },
 
   explanation: "WHERE filters individual rows before grouping; HAVING filters groups after aggregation. Alice's closed orders: 1200+3100+1800=6100. Bob's: 850+2200=3050. Carol's closed order (950) is below 3000.",
+  plainSummary: "It uses WHERE to keep only closed orders, GROUP BY to pile those rows together per rep, SUM to add up each rep's amounts, and HAVING to keep only reps whose total tops 3,000.",
 
   solutionQuery: `SELECT rep_name, SUM(amount) AS total_revenue
 FROM orders
@@ -207,6 +211,7 @@ INSERT INTO employees VALUES
   },
 
   explanation: "CASE WHEN works like a series of if/else-if checks. SQLite stops at the first true condition, so placing >= 85 first ensures scores like 92 get 'High', not 'Mid'. Dave (64) falls through all conditions to ELSE 'Low'.",
+  plainSummary: "It uses CASE WHEN, which checks each rule top to bottom and stops at the first one that fits, to label each score 'High', 'Mid', or 'Low'.",
 
   solutionQuery: `SELECT name,
   CASE
@@ -251,6 +256,7 @@ INSERT INTO employees VALUES
   },
 
   explanation: "ORDER BY score DESC puts the highest scores first, then LIMIT 3 cuts the result to just 3 rows. ORDER BY must come before LIMIT — LIMIT only makes sense after sorting.",
+  plainSummary: "It uses ORDER BY ... DESC to sort everyone from highest score to lowest, then LIMIT 3 to keep just the top three rows.",
 
   solutionQuery: `SELECT name, score
 FROM employees
@@ -280,7 +286,7 @@ INSERT INTO employees VALUES
   hints: [
     "You need the average salary computed dynamically — use a scalar subquery: (SELECT AVG(salary) FROM employees).",
     "Place that subquery inside a WHERE clause: WHERE salary > (SELECT AVG(salary) FROM employees).",
-    "Don't hardcode the average — the grader checks that your query actually computes it.",
+    "SELECT name, salary FROM employees WHERE salary > (SELECT AVG(salary) FROM employees)",
   ],
 
   answerKey: {
@@ -294,6 +300,7 @@ INSERT INTO employees VALUES
   },
 
   explanation: "A scalar subquery returns a single value and can appear wherever an expression is valid — including in WHERE. SELECT AVG(salary) FROM employees computes the average; placing it in WHERE salary > (...) filters to above-average earners. Average = (90000+80000+65000+72000+95000+58000)/6 = 76666.67. Hardcoding that number means your query breaks if the data changes.",
+  plainSummary: "It uses a small inner query with AVG to figure out the average salary on the fly, then WHERE to keep only people who earn more than that figure.",
 
   solutionQuery: `SELECT name, salary
 FROM employees
@@ -336,6 +343,7 @@ INSERT INTO orders VALUES
   },
 
   explanation: "EXISTS takes a correlated subquery and returns TRUE if it produces at least one row. Acme has order 1500, Gamma has 1200, Echo has 2000 — each has at least one order > 1000. Beta (800) and Delta (400) do not.",
+  plainSummary: "It uses EXISTS, which keeps a customer whenever a quick inner check can find at least one matching order over 1,000 tied to that customer.",
 
   solutionQuery: `SELECT name
 FROM customers c
@@ -361,12 +369,12 @@ INSERT INTO contacts VALUES
   (5,'Eve Davis','eve@beta.com','555-7890'),
   (6,'Frank Smith','frank@delta.com','333-1111');`,
 
-  prompt: "Find all contacts whose last name is Smith AND whose phone number starts with '555'. Return name and phone.",
+  prompt: "Find all people whose last name is Smith AND whose phone number starts with '555'. Return name and phone.",
 
   hints: [
     "LIKE 'Smith' won't match 'Alice Smith' — you need a wildcard: LIKE '%Smith'.",
     "Phone starts with '555': LIKE '555%'.",
-    "Combine both conditions with AND in the WHERE clause.",
+    "SELECT name, phone FROM contacts WHERE name LIKE '%Smith' AND phone LIKE '555%'",
   ],
 
   answerKey: {
@@ -379,6 +387,7 @@ INSERT INTO contacts VALUES
   },
 
   explanation: "LIKE '%Smith' matches any name ending in 'Smith' — the % wildcard matches zero or more characters at the start. Frank Smith has phone '333-1111' which fails the second condition, so he's excluded despite the name match.",
+  plainSummary: "It uses LIKE with % wildcards to match any name ending in 'Smith' and any phone starting with '555', and AND requires both to be true at once.",
 
   solutionQuery: `SELECT name, phone
 FROM contacts
