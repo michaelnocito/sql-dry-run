@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { SKILLS, SKILL_LABELS, computeAllMastery, getWeakestSkill } from '../lib/mastery'
 import { buildSession } from '../lib/sessionBuilder'
-import { getAllQuestions } from '../data/questionBank'
+import { getAllQuestions, TRACKS } from '../data/questionBank'
 import WeaknessReport from '../components/WeaknessReport'
 import './DashboardScreen.css'
 
@@ -108,6 +108,24 @@ export default function DashboardScreen({ attempts, onSelect }) {
         <div className="dash-card">
           <h3 className="dash-section-heading">Where to focus</h3>
           <WeaknessReport mastery={mastery} wrongQuestions={[]} />
+        </div>
+      )}
+
+      {TRACKS.length > 0 && (
+        <div className="dash-card dash-modes">
+          <h3 className="dash-section-heading">Industry tracks</h3>
+          <div className="dash-mode-row">
+            {TRACKS.map(t => (
+              <button
+                key={t.id}
+                className="dash-mode-btn"
+                onClick={() => onSelect('track', t.id)}
+              >
+                <span className="dash-mode-title">{t.label}</span>
+                <span className="dash-mode-sub">{t.count} questions · {t.blurb}</span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

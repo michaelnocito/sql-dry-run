@@ -4,6 +4,7 @@ import PracticeScreen   from './screens/PracticeScreen'
 import DiagnosticScreen from './screens/DiagnosticScreen'
 import MockExamScreen   from './screens/MockExamScreen'
 import QuickDrillScreen from './screens/QuickDrillScreen'
+import TrackScreen      from './screens/TrackScreen'
 import { loadAllAttempts } from './lib/db'
 import { computeStreak, computePoints, LEVELS, computeLevel } from './lib/mastery'
 import './App.css'
@@ -12,6 +13,7 @@ export default function App() {
   const [screen, setScreen]               = useState('home')
   const [attempts, setAttempts]           = useState([])
   const [practiceSkill, setPracticeSkill] = useState(null)
+  const [practiceTrack, setPracticeTrack] = useState(null)
 
   useEffect(() => {
     loadAllAttempts().then(setAttempts).catch(() => {})
@@ -21,8 +23,9 @@ export default function App() {
     loadAllAttempts().then(setAttempts).catch(() => {})
   }
 
-  const handleDashboardSelect = (mode, skill = null) => {
-    if (skill) setPracticeSkill(skill)
+  const handleDashboardSelect = (mode, payload = null) => {
+    if (mode === 'track') setPracticeTrack(payload)
+    else if (payload)     setPracticeSkill(payload)
     setScreen(mode)
   }
 
@@ -78,6 +81,13 @@ export default function App() {
         {screen === 'mock' && (
           <MockExamScreen
             onBack={() => setScreen('home')}
+            onAttemptLogged={refreshAttempts}
+          />
+        )}
+        {screen === 'track' && (
+          <TrackScreen
+            trackId={practiceTrack}
+            onBack={() => { setPracticeTrack(null); refreshAttempts(); setScreen('home') }}
             onAttemptLogged={refreshAttempts}
           />
         )}

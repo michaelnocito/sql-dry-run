@@ -4,6 +4,7 @@ import { JOINS_QUESTIONS }          from './questions/joins'
 import { SUBQUERIES_QUESTIONS }     from './questions/subqueries'
 import { WINDOW_FUNCTIONS_QUESTIONS } from './questions/window-functions'
 import { STRING_DATE_QUESTIONS }    from './questions/string-date'
+import { HEALTHCARE_QUESTIONS }     from './questions/healthcare-migration'
 import { SKILLS }                   from '../lib/mastery'
 
 export const QUESTION_BANK = {
@@ -13,6 +14,26 @@ export const QUESTION_BANK = {
   'subqueries':       SUBQUERIES_QUESTIONS,
   'window-functions': WINDOW_FUNCTIONS_QUESTIONS,
   'string-date':      STRING_DATE_QUESTIONS,
+}
+
+// Industry tracks — curated, scenario-driven question sets that reuse the core
+// skills on domain data. Kept SEPARATE from QUESTION_BANK so they never leak
+// into the general diagnostic / skill-practice / mock-exam flows.
+const TRACK_BANK = {
+  healthcare: HEALTHCARE_QUESTIONS,
+}
+
+export const TRACKS = [
+  {
+    id: 'healthcare',
+    label: 'Healthcare Migration',
+    blurb: 'Dedup MRNs · map legacy codes · FK integrity — real EHR-migration SQL',
+    count: HEALTHCARE_QUESTIONS.length,
+  },
+]
+
+export function getTrackQuestions(trackId) {
+  return TRACK_BANK[trackId] ?? []
 }
 
 export function getQuestions(skill, difficulty) {
